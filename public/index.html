@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Event Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 800px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.5;
+                transform: translateY(0);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-10px);
+            }
+        }
+
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            background: white;
+            border-radius: 0 0 20px 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-area button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .input-area button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .input-area button:active {
+            transform: translateY(0);
+        }
+
+        .input-area button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .refresh-btn {
+            padding: 8px 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .refresh-btn:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 600px) {
+            .message-content {
+                max-width: 85%;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .input-area button {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Event Chatbot</h1>
+            <p>Ask about tech events, hackathons & meetups</p>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Ask about events..." 
+                onkeypress="handleKeypress(event)"
+            >
+            <button onclick="sendMessage()">Send</button>
+        </div>
+        <button class="refresh-btn" onclick="refreshEvents()">🔄 Refresh Events</button>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        let isWaitingForResponse = false;
+
+        // Initial greeting
+        window.addEventListener('load', () => {
+            addBotMessage('👋 Hi! I can help you find tech events, hackathons, and meetups. Ask me anything about upcoming events!');
+        });
+
+        function addUserMessage(message) {
+            const div = document.createElement('div');
+            div.className = 'message user';
+            div.innerHTML = `<div class="message-content">${escapeHtml(message)}</div>`;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addBotMessage(message) {
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.innerHTML = `<div class="message-content">${escapeHtml(message)}</div>`;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.id = 'typing-indicator';
+            div.innerHTML = `
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) indicator.remove();
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            
+            if (!message || isWaitingForResponse) return;
+
+            addUserMessage(message);
+            userInput.value = '';
+            isWaitingForResponse = true;
+
+            showTypingIndicator();
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                removeTypingIndicator();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addBotMessage(data.response);
+                } else {
+                    addBotMessage('❌ Sorry, I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                removeTypingIndicator();
+                addBotMessage('❌ Connection error. Please check your internet and try again.');
+                console.error('Error:', error);
+            } finally {
+                isWaitingForResponse = false;
+                userInput.focus();
+            }
+        }
+
+        async function refreshEvents() {
+            try {
+                const response = await fetch('/api/events/refresh');
+                if (response.ok) {
+                    const data = await response.json();
+                    addBotMessage(`✅ Refreshed! Found ${data.count} events from Meetup, Eventbrite, and Lanyrd.`);
+                }
+            } catch (error) {
+                addBotMessage('❌ Failed to refresh events.');
+                console.error('Error:', error);
+            }
+        }
+
+        function handleKeypress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>
