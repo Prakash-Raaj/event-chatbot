@@ -1,4 +1,4 @@
-A chatmot which provides information about tech events, meet ups happening at your area.
+A chatbot which provides information about tech events, meet ups happening at your area.
 
 
 Tech-stack:
